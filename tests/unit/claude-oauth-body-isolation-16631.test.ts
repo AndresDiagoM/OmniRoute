@@ -16,7 +16,7 @@
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { detachClaudeCodeRewriteTargets } from "../../open-sse/executors/base.ts";
+import { detachClaudeCodeRewriteTargets } from "../../open-sse/executors/claudeOauthBodyIsolation.ts";
 import { getExecutor } from "../../open-sse/executors/index.ts";
 
 type Body = Record<string, unknown>;
