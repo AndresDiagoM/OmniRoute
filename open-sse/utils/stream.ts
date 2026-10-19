@@ -3344,8 +3344,8 @@ export function createSSETransformStreamWithLogger(
   requestedThinking: boolean | undefined = undefined,
   customToolNames: ReadonlySet<string> = new Set(),
   requestToolIdentityMap: Map<string, { namespace: string; name: string }> | null = null,
-  streamBufferBytes: number = DEFAULT_STREAM_BUFFER_BYTES,
-  clientTools: unknown = null
+  clientTools: unknown = null,
+  streamBufferBytes: number = DEFAULT_STREAM_BUFFER_BYTES
 ) {
   return createSSEStream({
     mode: STREAM_MODE.TRANSLATE,

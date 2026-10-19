@@ -719,7 +719,6 @@ export async function runStreamingTail(deps: StreamingTailDeps) {
       requestedThinking,
       customToolNames,
       requestToolIdentityMap,
-      undefined,
       // The CLIENT's declared tools[]: an Anthropic-format client gets its own
       // tool-name casing back from any provider (OpenCode `read`, Claude Code `Read`).
       (body as Record<string, unknown> | null | undefined)?.tools ?? null
