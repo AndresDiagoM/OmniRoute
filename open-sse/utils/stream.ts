@@ -1926,7 +1926,7 @@ export function createSSEStream(options: StreamOptions = {}) {
                   const restoredToolName = restoreClaudePassthroughToolUseName(
                     parsed,
                     toolNameMap,
-                    body
+                    clientTools ?? (body as JsonRecord | null)?.tools
                   );
                   // Track content length and accumulate from Claude format
                   if (parsed.delta?.text) {
@@ -3381,7 +3381,8 @@ export function createPassthroughStreamWithLogger(
   apiKeyInfo: unknown = null,
   onFailure: ((payload: StreamFailurePayload) => boolean | void | Promise<void>) | null = null,
   clientResponseFormat: string | null = null,
-  requestToolIdentityMap: Map<string, { namespace: string; name: string }> | null = null
+  requestToolIdentityMap: Map<string, { namespace: string; name: string }> | null = null,
+  clientTools: unknown = null
 ) {
   return createSSEStream({
     mode: STREAM_MODE.PASSTHROUGH,
@@ -3396,6 +3397,7 @@ export function createPassthroughStreamWithLogger(
     onFailure,
     clientResponseFormat,
     requestToolIdentityMap,
+    clientTools,
   });
 }
 

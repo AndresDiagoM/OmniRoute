@@ -736,7 +736,8 @@ export async function runStreamingTail(deps: StreamingTailDeps) {
       apiKeyInfo,
       handleStreamFailure,
       clientResponseFormat,
-      requestToolIdentityMap
+      requestToolIdentityMap,
+      (body as Record<string, unknown> | null | undefined)?.tools ?? null
     );
   }
 
