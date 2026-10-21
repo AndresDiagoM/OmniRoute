@@ -32,6 +32,24 @@ import { restoreClaudeToolName } from "./claudeCodeToolRemapper.ts";
 
 type JsonRecord = Record<string, unknown>;
 
+function asRecord(value: unknown): JsonRecord | null {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as JsonRecord) : null;
+}
+
+function trimmedName(record: JsonRecord | null): string {
+  return typeof record?.name === "string" ? record.name.trim() : "";
+}
+
+/**
+ * The spelling one tools[] entry declares: OpenAI `function.name` first, then
+ * Anthropic `name`. Empty string for entries that declare neither.
+ */
+function declaredNameOf(tool: unknown): string {
+  const item = asRecord(tool);
+  if (!item) return "";
+  return trimmedName(asRecord(item.function)) || trimmedName(item);
+}
+
 /**
  * Exact- then case-insensitive lookup of `name` inside the request's tools[]
  * (Anthropic `name` or OpenAI `function.name`). Returns the DECLARED spelling,
@@ -42,15 +60,7 @@ export function findDeclaredToolName(requestTools: unknown, name: string): strin
   const lower = name.toLowerCase();
   let caseInsensitive: string | null = null;
   for (const tool of requestTools) {
-    if (!tool || typeof tool !== "object" || Array.isArray(tool)) continue;
-    const item = tool as JsonRecord;
-    const directName = typeof item.name === "string" ? item.name.trim() : "";
-    const fn =
-      item.function && typeof item.function === "object" && !Array.isArray(item.function)
-        ? (item.function as JsonRecord)
-        : null;
-    const functionName = typeof fn?.name === "string" ? fn.name.trim() : "";
-    const declared = functionName || directName;
+    const declared = declaredNameOf(tool);
     if (!declared) continue;
     if (declared === name) return declared;
     if (caseInsensitive === null && declared.toLowerCase() === lower) {
@@ -58,6 +68,22 @@ export function findDeclaredToolName(requestTools: unknown, name: string): strin
     }
   }
   return caseInsensitive;
+}
+
+/**
+ * Alias-ledger (`_toolNameMap`) lookup: a non-identity hit on the sanitized or
+ * original side wins. An identity echo (`read` → `read`) returns null so the
+ * request's declared casing decides instead.
+ */
+function aliasLedgerName(map: Map<string, string>, rawName: string): string | null {
+  const exact = map.get(rawName);
+  if (typeof exact === "string" && exact !== rawName) return exact;
+  const lower = rawName.toLowerCase();
+  for (const [sanitized, original] of map.entries()) {
+    if (sanitized.toLowerCase() !== lower && original.toLowerCase() !== lower) continue;
+    return original !== rawName ? original : null;
+  }
+  return null;
 }
 
 /**
@@ -74,16 +100,8 @@ export function restoreDeclaredToolName(
   if (!rawName) return rawName;
   const map = toolNameMap instanceof Map ? (toolNameMap as Map<string, string>) : null;
 
-  if (map && map.size > 0) {
-    const exact = map.get(rawName);
-    if (typeof exact === "string" && exact !== rawName) return exact;
-    const lower = rawName.toLowerCase();
-    for (const [sanitized, original] of map.entries()) {
-      if (sanitized.toLowerCase() !== lower && original.toLowerCase() !== lower) continue;
-      if (original !== rawName) return original;
-      break; // identity echo in the ledger — the request decides the casing
-    }
-  }
+  const aliased = map && map.size > 0 ? aliasLedgerName(map, rawName) : null;
+  if (aliased !== null) return aliased;
 
   const declared = findDeclaredToolName(clientTools, rawName);
   if (declared !== null) return declared;
