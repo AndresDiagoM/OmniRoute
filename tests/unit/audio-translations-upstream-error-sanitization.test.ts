@@ -36,6 +36,25 @@ test("translation: an opaque HTML upstream error is not echoed to the client", a
   assert.ok(response.headers.get("access-control-allow-methods"), "lost CORS on error response");
 });
 
+test("translation: a hostile JSON upstream message keeps its reason but not its secrets", async () => {
+  const hostile = JSON.stringify({
+    error: {
+      message:
+        "upstream rejected the request\n    at Object.post (/srv/app/node_modules/groq/dist/index.js:88:15)\napi_key=sk-live-AUDIO-SECRET-4242",
+    },
+  });
+  const response = await translateWithUpstream(
+    new Response(hostile, { status: 502, headers: { "content-type": "application/json" } })
+  );
+
+  assert.equal(response.status, 502);
+  const raw = await response.text();
+  assert.ok(!raw.includes("sk-live-AUDIO-SECRET-4242"), `leaked a credential: ${raw}`);
+  assert.ok(!raw.includes("/srv/app/node_modules"), `leaked a path: ${raw}`);
+  const parsed = JSON.parse(raw) as { error?: { message?: string } };
+  assert.match(parsed.error?.message ?? "", /upstream rejected the request/);
+});
+
 test("translation: a JSON upstream error keeps its reason and carries CORS", async () => {
   const response = await translateWithUpstream(
     new Response(JSON.stringify({ error: { message: "too many requests" } }), {
