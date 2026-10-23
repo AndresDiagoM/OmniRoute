@@ -227,6 +227,28 @@ test("convertOpenAIResponseToGemini: surfaces upstream error bodies untouched", 
   assert.equal(body.error.code, 429);
 });
 
+test("convertOpenAIResponseToGemini: maps cached and reasoning tokens to cachedContentTokenCount / thoughtsTokenCount", async () => {
+  const upstream = Response.json({
+    choices: [{ message: { role: "assistant", content: "Hi" }, finish_reason: "stop" }],
+    usage: {
+      prompt_tokens: 100,
+      completion_tokens: 20,
+      total_tokens: 120,
+      prompt_tokens_details: { cached_tokens: 64 },
+      completion_tokens_details: { reasoning_tokens: 8 },
+    },
+  });
+  const out = await convertOpenAIResponseToGemini(upstream, "fallback");
+  const body = (await out.json()) as { usageMetadata?: Record<string, number> };
+  assert.deepEqual(body.usageMetadata, {
+    promptTokenCount: 100,
+    candidatesTokenCount: 20,
+    totalTokenCount: 120,
+    thoughtsTokenCount: 8,
+    cachedContentTokenCount: 64,
+  });
+});
+
 const USAGE_WITH_DETAILS =
   '{"prompt_tokens":10,"completion_tokens":5,"total_tokens":15,"prompt_tokens_details":{"cached_tokens":3},"completion_tokens_details":{"reasoning_tokens":2}}';
 
