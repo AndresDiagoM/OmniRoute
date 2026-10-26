@@ -734,10 +734,13 @@ export class DefaultExecutor extends BaseExecutor {
       { type?: string; json_schema?: { schema?: unknown } } | undefined;
     if (!rf) return body;
 
-    // openai-compatible-* providers accept json_object natively — only the
-    // json_schema form needs downgrading there. kilocode rejects BOTH forms,
-    // so it enters the strip path below regardless.
+    // openai-compatible-* accept json_object natively; only json_schema needs downgrading there.
+    // kilocode rejects BOTH forms, so it strips below. Non-JSON formats (text/unknown/malformed)
+    // get no JSON prompt: kilocode still drops the field it rejects, others pass through.
+    const { response_format: _dropped, ...rest } = record;
     if (isOpenAiCompatible && rf.type === "json_object") return body;
+    if (rf.type !== "json_schema" && rf.type !== "json_object")
+      return isKiloCode ? (rest as T) : body;
 
     const schema = rf.type === "json_schema" ? rf.json_schema?.schema : undefined;
     if (rf.type === "json_schema" && !schema) return body;
@@ -756,7 +759,7 @@ export class DefaultExecutor extends BaseExecutor {
       if (typeof sys.content === "string") {
         sys.content = `${sys.content}\n\n${prompt}`;
       } else if (Array.isArray(sys.content)) {
-        sys.content.push({ type: "text", text: `\n\n${prompt}` });
+        sys.content = [...sys.content, { type: "text", text: `\n\n${prompt}` }];
       }
     } else {
       messages.unshift({ role: "system", content: prompt });
@@ -766,10 +769,7 @@ export class DefaultExecutor extends BaseExecutor {
     // both json_schema AND json_object 400 with `param: response_format`) — strip
     // it entirely and rely on the schema prompt. openai-compatible-* providers
     // accept json_object, so keep the downgrade there.
-    if (isKiloCode) {
-      const { response_format: _dropped, ...rest } = record;
-      return { ...rest, messages } as T;
-    }
+    if (isKiloCode) return { ...rest, messages } as T;
     return { ...record, messages, response_format: { type: "json_object" } } as T;
   }
 
