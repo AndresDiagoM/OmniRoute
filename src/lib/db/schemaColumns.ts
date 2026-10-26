@@ -275,7 +275,7 @@ export function ensureCallLogsColumns(db: SqliteDatabase) {
       db.exec("ALTER TABLE call_logs ADD COLUMN session_tag TEXT DEFAULT NULL");
       console.log("[DB] Added call_logs.session_tag column");
     }
-    // added by 213_call_logs_client_session_id; back-filled here because the call-log
+    // added by 214_call_logs_client_session_id; back-filled here because the call-log
     // INSERT names it on every write.
     if (!columnNames.has("client_session_id")) {
       db.exec("ALTER TABLE call_logs ADD COLUMN client_session_id TEXT DEFAULT NULL");

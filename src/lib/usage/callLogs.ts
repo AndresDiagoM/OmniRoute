@@ -671,7 +671,7 @@ async function buildCallLogRow(entry: any): Promise<PreparedCallLogRow> {
     addedWaitCause: toStringOrNull(entry.addedWaitCause),
     modelPinned: entry.modelPinned ? 1 : 0,
     sessionTag: entry.sessionTag || null,
-    // The client's own session id (call_logs.client_session_id, migration 213); NULL for
+    // The client's own session id (call_logs.client_session_id, migration 214); NULL for
     // writers that have no client request to read it from.
     clientSessionId: toStringOrNull(entry.clientSessionId)?.slice(0, 128) || null,
     // OpenAI Responses API response id, when this attempt produced one --

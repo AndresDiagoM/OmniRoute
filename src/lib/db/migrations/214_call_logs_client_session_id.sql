@@ -1,4 +1,4 @@
--- 213: the client's own session id on call-log rows (opencode x-opencode-session, Claude Code
+-- 214: the client's own session id on call-log rows (opencode x-opencode-session, Claude Code
 -- x-claude-code-session-id / metadata.user_id.session_id, Codex session_id). session_tag holds
 -- OmniRoute's conversation id (or an explicit X-OmniRoute-Session-Id); this column keeps the id
 -- the client itself reports, so rows can be joined to the agent session that sent them.

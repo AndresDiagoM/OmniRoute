@@ -10,12 +10,12 @@ import { fileURLToPath } from "node:url";
 import type { SqliteAdapter } from "../../../src/lib/db/adapters/types.ts";
 import { openMemorySqliteAdapter } from "../_helpers/memorySqliteAdapter.ts";
 
-const MIGRATION = "213_call_logs_client_session_id.sql";
+const MIGRATION = "214_call_logs_client_session_id.sql";
 const repoMigrations = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
   "../../../src/lib/db/migrations"
 );
-const migrationsDir = fs.mkdtempSync(path.join(os.tmpdir(), "omniroute-migration-213-"));
+const migrationsDir = fs.mkdtempSync(path.join(os.tmpdir(), "omniroute-migration-214-"));
 fs.copyFileSync(path.join(repoMigrations, MIGRATION), path.join(migrationsDir, MIGRATION));
 const originalMigrationsDir = process.env.OMNIROUTE_MIGRATIONS_DIR;
 process.env.OMNIROUTE_MIGRATIONS_DIR = migrationsDir;
@@ -33,7 +33,7 @@ const columns = (db: SqliteAdapter) =>
 const indexes = (db: SqliteAdapter) =>
   (db.prepare("PRAGMA index_list(call_logs)").all() as Array<{ name: string }>).map((i) => i.name);
 const applied = (db: SqliteAdapter) =>
-  db.prepare("SELECT version FROM _omniroute_migrations WHERE version = '213'").get();
+  db.prepare("SELECT version FROM _omniroute_migrations WHERE version = '214'").get();
 
 function openDb(withColumn: boolean): SqliteAdapter {
   const db = openMemorySqliteAdapter();
@@ -67,7 +67,7 @@ test("an older call_logs gains client_session_id and its index; a second run is 
   }
 });
 
-test("a call_logs that already has the column (healed at boot) still records 213 and gets the index", () => {
+test("a call_logs that already has the column (healed at boot) still records 214 and gets the index", () => {
   const db = openDb(true);
   try {
     runMigrations(db);
