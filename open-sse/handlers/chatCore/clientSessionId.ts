@@ -13,7 +13,7 @@
  */
 import { resolveClientSessionId } from "../../services/conversationTracker.ts";
 
-type RawRequestLike = { headers?: unknown; body?: unknown } | null | undefined;
+type RawRequestLike = { endpoint?: string; headers?: unknown; body?: unknown } | null | undefined;
 
 function toHeaders(record: unknown): Headers | null {
   if (!record || typeof record !== "object") return null;
